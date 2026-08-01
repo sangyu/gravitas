@@ -12,18 +12,22 @@ import { Slider } from "@/components/ui/slider";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Orbit, Settings, Loader2, Search } from "lucide-react";
 
+// prefilled in the search bar on load — the user still has to hit "Map it"
+const DEFAULT_QUERY = "10.1038/s41467-024-47203-w";
+
 const EXAMPLES = [
   { label: "Engram optogenetics (Nature 2012)", value: "10.1038/nature11028" },
   { label: "Moving beyond P values (DABEST)", value: "10.1038/s41592-019-0470-3" },
   { label: "BLA antagonistic neurons (PMID)", value: "27749826" },
-  { label: "Kalium channelrhodopsins 2024", value: "10.1038/s41467-024-47203-w" },
+  { label: "Kalium channelrhodopsins 2024", value: DEFAULT_QUERY },
+  { label: "Noradrenergic LC–frontal pathways (PNAS 2020)", value: "10.1073/pnas.2015635117" },
 ];
 
 const DEFAULT_N = 25;
 const HARD_CAP = 1000; // per direction
 
 export default function App() {
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState(DEFAULT_QUERY);
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [status, setStatus] = useState("");

@@ -421,6 +421,47 @@ function s2Node(p: any): PaperNode | null {
   };
 }
 
+/**
+ * Europe PMC's /references endpoint carries neither citation counts nor DOIs, so
+ * elision-fallback nodes would all render at radius zero and defeat top-N ranking.
+ * Its /search endpoint has both: one GET per 25 PMIDs backfills them.
+ *
+ * (S2's /paper/batch would give counts on the same scale as the rest of the graph,
+ * but it is POST-only and its CORS preflight advertises GET,OPTIONS — browsers
+ * block it. Europe PMC counts are biomedical-only, so they run lower than S2's;
+ * that is fine here because references are ranked against each other, never
+ * against the citing side.)
+ */
+async function epmcEnrich(
+  pmids: string[],
+  onStatus?: StatusFn
+): Promise<Map<string, { citationCount: number; doi?: string }>> {
+  const out = new Map<string, { citationCount: number; doi?: string }>();
+  const CHUNK = 25;
+  for (let i = 0; i < pmids.length; i += CHUNK) {
+    const chunk = pmids.slice(i, i + CHUNK);
+    onStatus?.(
+      `looking up citation counts (${Math.min(i + CHUNK, pmids.length)}/${pmids.length})…`
+    );
+    const query = chunk.map((p) => `EXT_ID:${p}`).join(" OR ");
+    try {
+      const j = await fetchJson(
+        `${EPMC}/search?query=${encodeURIComponent(query)}&format=json&resultType=lite&pageSize=${CHUNK}`
+      );
+      for (const r of j?.resultList?.result || []) {
+        if (!r.pmid || out.has(String(r.pmid))) continue;
+        out.set(String(r.pmid), {
+          citationCount: r.citedByCount ?? 0,
+          doi: r.doi || undefined,
+        });
+      }
+    } catch {
+      // best effort: a failed chunk just leaves those nodes at zero
+    }
+  }
+  return out;
+}
+
 export async function fetchNeighborhood(
   paperId: string,
   ids: Ids,
@@ -534,6 +575,7 @@ export async function fetchNeighborhood(
         id: nid, title: r.title || "Untitled",
         year: r.pubYear ? parseInt(r.pubYear) : null, citationCount: 0,
         authors: (r.authorString || "").split(",").slice(0, 3).join(","),
+        pmid: r.source === "MED" && r.id ? String(r.id) : undefined,
         doi: r.doi, url: r.doi ? `https://doi.org/${r.doi}` : undefined,
       });
       edges.push({
@@ -543,6 +585,25 @@ export async function fetchNeighborhood(
         refIndex: w.refOffset + i,
       });
     });
+
+    // /references gives no citation counts or DOIs — backfill both, or every
+    // reference renders at minimum radius and the top-N sort becomes a no-op
+    const pmids = slice
+      .filter((r: any) => r.source === "MED" && r.id)
+      .map((r: any) => String(r.id));
+    if (pmids.length > 0) {
+      const meta = await epmcEnrich(pmids, onStatus);
+      for (const r of slice) {
+        const m = meta.get(String(r.id));
+        const n = nodes.get(`epmc:${r.id}`);
+        if (!m || !n) continue;
+        n.citationCount = m.citationCount;
+        if (m.doi && !n.doi) {
+          n.doi = m.doi;
+          n.url = `https://doi.org/${m.doi}`;
+        }
+      }
+    }
     return true;
   }
 
