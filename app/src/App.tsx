@@ -21,6 +21,7 @@ const EXAMPLES = [
   { label: "BLA antagonistic neurons (PMID)", value: "27749826" },
   { label: "Kalium channelrhodopsins 2024", value: DEFAULT_QUERY },
   { label: "Noradrenergic LC–frontal pathways (PNAS 2020)", value: "10.1073/pnas.2015635117" },
+  { label: "Dorsal raphe & intertemporal choice (Curr Biol 2017)", value: "10.1016/j.cub.2017.09.008" },
 ];
 
 const DEFAULT_N = 25;
