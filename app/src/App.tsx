@@ -499,8 +499,21 @@ export default function App() {
         )}
       </div>
 
-      <footer className="px-4 py-1.5 text-[11px] text-stone-400 border-t border-stone-200 bg-white">
-        Data: Semantic Scholar · Europe PMC · PubMed Central full texts · OpenCitations · Crossref · claims shown verbatim, never paraphrased · nothing leaves your browser
+      <footer className="px-4 py-1.5 text-[11px] text-stone-400 border-t border-stone-200 bg-white flex flex-wrap gap-x-1.5">
+        <span>
+          Data: Semantic Scholar · Europe PMC · PubMed Central full texts · OpenCitations · Crossref · claims shown verbatim, never paraphrased · nothing leaves your browser
+        </span>
+        <span className="ml-auto whitespace-nowrap">
+          © {new Date().getFullYear()}{" "}
+          <a
+            href="https://xusangyu.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-stone-500 hover:text-teal-700 hover:underline"
+          >
+            Sangyu Xu
+          </a>
+        </span>
       </footer>
     </div>
   );
