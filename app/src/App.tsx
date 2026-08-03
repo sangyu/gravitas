@@ -46,6 +46,7 @@ export default function App() {
   const [selNode, setSelNode] = useState<string | null>(null);
   const [claimLoading, setClaimLoading] = useState(false);
   const [keyDraft, setKeyDraft] = useState(getApiKey());
+  const [menu, setMenu] = useState<"examples" | "settings" | null>(null);
 
   const fetchedRef = useRef(fetched);
   fetchedRef.current = fetched;
@@ -342,7 +343,7 @@ export default function App() {
             <span className="ml-1.5 hidden sm:inline">Map it</span>
           </Button>
         </form>
-        <Popover>
+        <Popover open={menu === "examples"} onOpenChange={(o) => setMenu(o ? "examples" : null)}>
           <PopoverTrigger asChild>
             <Button variant="ghost" size="sm">Examples</Button>
           </PopoverTrigger>
@@ -351,14 +352,14 @@ export default function App() {
               <button
                 key={ex.value}
                 className="w-full text-left text-sm px-2 py-1.5 rounded hover:bg-stone-100"
-                onClick={() => { setQuery(ex.value); loadSeed(ex.value); }}
+                onClick={() => { setMenu(null); setQuery(ex.value); loadSeed(ex.value); }}
               >
                 {ex.label}
               </button>
             ))}
           </PopoverContent>
         </Popover>
-        <Popover>
+        <Popover open={menu === "settings"} onOpenChange={(o) => setMenu(o ? "settings" : null)}>
           <PopoverTrigger asChild>
             <Button variant="ghost" size="icon"><Settings className="w-4 h-4" /></Button>
           </PopoverTrigger>
@@ -375,8 +376,9 @@ export default function App() {
         </Popover>
       </header>
 
-      {/* main */}
-      <div className="relative flex-1">
+      {/* main — capture phase: d3-zoom stops pointerdown propagation inside the
+          canvas, so Radix's own outside-click dismissal never fires */}
+      <div className="relative flex-1" onPointerDownCapture={() => setMenu(null)}>
         {nodeList.length === 0 && !loading && (
           <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-8 space-y-4">
             <Orbit className="w-14 h-14 text-teal-600/60" />
